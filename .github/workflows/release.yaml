@@ -1,0 +1,60 @@
+name: .NET Core
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+    projectName: bom
+    configuration: Release
+    artifact: bom.zip
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Bump version and push tag
+      id: version
+      uses: anothrNick/github-tag-action@1.17.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        WITH_V: true
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.x
+
+    - name: Build with dotnet
+      run: dotnet build --configuration ${configuration}
+
+    - name: Zip artefact
+      run: zip --junk-paths -r ${artifact} ./LarchSys.Bom/bin/${configuration}/netcoreapp3.1/
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@latest
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+        tag_name: ${{ steps.version.outputs.new_tag }}
+        release_name: ${{ env.projectName }} ${{ steps.version.outputs.new_tag }}
+        body: ${{ github.event.head_commit.message }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@latest
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: ./${{env.artifact}}
+        asset_name: ${{env.artifact}}
+        asset_content_type: application/zip
