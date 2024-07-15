@@ -1,5 +1,5 @@
 ﻿
-![.NET Core](https://github.com/r-Larch/Bom/workflows/.NET%20Core/badge.svg)
+![Build](https://github.com/r-Larch/Bom/workflows/Create%20Release/badge.svg)
 
 # bom
 
