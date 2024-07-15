@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Bump version and push tag
       id: version
@@ -26,15 +26,15 @@ jobs:
         WITH_V: true
 
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 3.1.x
+        dotnet-version: 8.x.x
 
     - name: Build with dotnet
       run: dotnet build --configuration ${configuration}
 
     - name: Zip artefact
-      run: zip --junk-paths -r ${artifact} ./LarchSys.Bom/bin/${configuration}/netcoreapp3.1/
+      run: zip --junk-paths -r ${artifact} ./LarchSys.Bom/bin/${configuration}/net8.0/
 
     - name: Create Release
       id: create_release

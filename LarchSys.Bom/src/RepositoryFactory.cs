@@ -1,82 +1,77 @@
-﻿using System;
-using System.IO;
-using System.Collections.Generic;
+﻿namespace LarchSys.Bom;
+
+internal interface IRepository {
+    bool IsIgnored(FileInfo file);
+}
+
+internal class RepositoryFactory : IDisposable {
+    private static readonly IRepository Noop = new NoopRepository();
+
+    // cache instances for each directory because there could be submodules!
+    public readonly Dictionary<string, IRepository> Instances = [];
+    public readonly Dictionary<string, string> DirectoryRootMap = [];
+
+    public static string GitFolder = $"{Path.DirectorySeparatorChar}.git{Path.DirectorySeparatorChar}";
 
 
-namespace LarchSys.Bom {
-    internal interface IRepository {
-        bool IsIgnored(FileInfo file);
+    public IRepository GetRepository(FileInfo file)
+    {
+        if (file.DirectoryName == null) {
+            return Noop;
+        }
+
+        if (!DirectoryRootMap.TryGetValue(file.DirectoryName, out var root)) {
+            root = GetRootDirectory(file);
+            DirectoryRootMap.Add(file.DirectoryName, root);
+        }
+
+        if (!Instances.TryGetValue(root, out var git)) {
+            git = CreateGitRepository(root);
+            Instances.Add(root, git);
+        }
+
+        return git;
     }
 
-    internal class RepositoryFactory : IDisposable {
-        private static readonly IRepository Noop = new NoopRepository();
 
-        // cache instances for each directory because there could be submodules!
-        public readonly Dictionary<string, IRepository> Instances = new Dictionary<string, IRepository>();
-        public readonly Dictionary<string, string> DirectoryRootMap = new Dictionary<string, string>();
-
-        public static string GitFolder = $"{Path.DirectorySeparatorChar}.git{Path.DirectorySeparatorChar}";
-
-
-        public IRepository GetRepository(FileInfo file)
-        {
-            if (file.DirectoryName == null) {
-                return Noop;
-            }
-
-            if (!DirectoryRootMap.TryGetValue(file.DirectoryName, out var root)) {
-                root = GetRootDirectory(file);
-                DirectoryRootMap.Add(file.DirectoryName, root);
-            }
-
-            if (!Instances.TryGetValue(root, out var git)) {
-                git = CreateGitRepository(root);
-                Instances.Add(root, git);
-            }
-
-            return git;
+    private static string GetRootDirectory(in FileInfo file)
+    {
+        // handle: /.git/
+        var index = file.FullName.IndexOf(GitFolder, StringComparison.InvariantCulture);
+        if (index != -1) {
+            return file.FullName[..index];
         }
 
+        var path = Executor.Exec("git", "rev-parse --show-toplevel", file.Directory!);
 
-        private static string GetRootDirectory(in FileInfo file)
-        {
-            // handle: /.git/
-            var index = file.FullName.IndexOf(GitFolder, StringComparison.InvariantCulture);
-            if (index != -1) {
-                return file.FullName.Substring(0, index);
-            }
+        var normalized = string.IsNullOrEmpty(path)
+            ? string.Empty
+            : new DirectoryInfo(path).FullName;
 
-            var path = Executor.Exec("git", "rev-parse --show-toplevel", file.Directory);
+        return normalized;
+    }
 
-            var normalized = string.IsNullOrEmpty(path)
-                ? string.Empty
-                : new DirectoryInfo(path).FullName;
 
-            return normalized;
+    private static IRepository CreateGitRepository(in string root)
+    {
+        if (string.IsNullOrEmpty(root)) {
+            return Noop;
         }
 
+        return new GitRepository(new DirectoryInfo(root));
+    }
 
-        private static IRepository CreateGitRepository(in string root)
-        {
-            if (string.IsNullOrEmpty(root)) {
-                return Noop;
+
+    public void Dispose()
+    {
+        DirectoryRootMap.Clear();
+
+        foreach (var repo in Instances.Values) {
+            if (repo is IDisposable disposable) {
+                disposable.Dispose();
             }
-
-            return new GitRepository(new DirectoryInfo(root));
         }
 
-
-        public void Dispose()
-        {
-            DirectoryRootMap.Clear();
-
-            foreach (var repo in Instances.Values) {
-                if (repo is IDisposable disposable) {
-                    disposable.Dispose();
-                }
-            }
-
-            Instances.Clear();
-        }
+        Instances.Clear();
     }
 }

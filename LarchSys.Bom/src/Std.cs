@@ -1,29 +1,24 @@
-﻿using System;
-
-
-#nullable enable
-
-namespace LarchSys {
+﻿namespace LarchSys {
     internal class Std {
         #region Fluend
 
-        public static ColorWriter Red => new ColorWriter(ConsoleColor.Red);
-        public static ColorWriter Geen => new ColorWriter(ConsoleColor.Green);
-        public static ColorWriter Blue => new ColorWriter(ConsoleColor.Blue);
-        public static ColorWriter Yellow => new ColorWriter(ConsoleColor.Yellow);
-        public static ColorWriter Cyan => new ColorWriter(ConsoleColor.Cyan);
-        public static ColorWriter Magenta => new ColorWriter(ConsoleColor.Magenta);
-        public static ColorWriter Gray => new ColorWriter(ConsoleColor.Gray);
-        public static ColorWriter White => new ColorWriter(ConsoleColor.White);
-        public static ColorWriter Black => new ColorWriter(ConsoleColor.Black);
+        public static ColorWriter Red => new(ConsoleColor.Red);
+        public static ColorWriter Geen => new(ConsoleColor.Green);
+        public static ColorWriter Blue => new(ConsoleColor.Blue);
+        public static ColorWriter Yellow => new(ConsoleColor.Yellow);
+        public static ColorWriter Cyan => new(ConsoleColor.Cyan);
+        public static ColorWriter Magenta => new(ConsoleColor.Magenta);
+        public static ColorWriter Gray => new(ConsoleColor.Gray);
+        public static ColorWriter White => new(ConsoleColor.White);
+        public static ColorWriter Black => new(ConsoleColor.Black);
 
-        public static ColorWriter DarkRed => new ColorWriter(ConsoleColor.DarkRed);
-        public static ColorWriter DarkGeen => new ColorWriter(ConsoleColor.DarkGreen);
-        public static ColorWriter DarkBlue => new ColorWriter(ConsoleColor.DarkBlue);
-        public static ColorWriter DarkYellow => new ColorWriter(ConsoleColor.DarkYellow);
-        public static ColorWriter DarkCyan => new ColorWriter(ConsoleColor.DarkCyan);
-        public static ColorWriter DarkMagenta => new ColorWriter(ConsoleColor.DarkMagenta);
-        public static ColorWriter DarkGray => new ColorWriter(ConsoleColor.DarkGray);
+        public static ColorWriter DarkRed => new(ConsoleColor.DarkRed);
+        public static ColorWriter DarkGeen => new(ConsoleColor.DarkGreen);
+        public static ColorWriter DarkBlue => new(ConsoleColor.DarkBlue);
+        public static ColorWriter DarkYellow => new(ConsoleColor.DarkYellow);
+        public static ColorWriter DarkCyan => new(ConsoleColor.DarkCyan);
+        public static ColorWriter DarkMagenta => new(ConsoleColor.DarkMagenta);
+        public static ColorWriter DarkGray => new(ConsoleColor.DarkGray);
 
         #endregion
 
@@ -43,10 +38,10 @@ namespace LarchSys {
                 writer.Line(message);
             }
 
-            Exception? ex = e;
+            var ex = e;
             do {
                 writer.Line("[" + ex.GetType().FullName + "]: " + ex.Message);
-                if (!(ex is AggregateException)) {
+                if (ex is not AggregateException) {
                     writer.Line(ex.StackTrace);
                 }
 
